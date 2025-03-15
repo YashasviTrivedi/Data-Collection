@@ -1,0 +1,30 @@
+name: Scrape & Update FAISS Every 15 Minutes
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # Runs every 15 minutes
+  workflow_dispatch:  # Allows manual execution
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Web Scraping (Electricity Prices)
+        run: |
+          python States_data.py
+          python VP_data.py
+
+      - name: Run FAISS Index Update
+        run: python store_in_faiss_upd.py
