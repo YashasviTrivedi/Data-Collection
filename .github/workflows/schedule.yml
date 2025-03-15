@@ -39,7 +39,7 @@ jobs:
       - name: Run Web Scraping
         run: |
           python States_data.py
-          python VP_data.py
+          #python VP_data.py
 
       - name: Run FAISS Index Update
-        run: python store_in_faiss.py
+        run: python store_in_faiss_upd.py
