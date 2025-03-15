@@ -3,11 +3,11 @@ name: Scrape & Update FAISS Every 15 Minutes
 on:
   schedule:
     - cron: '*/15 * * * *'  # Runs every 15 minutes
-  workflow_dispatch:  # Allows manual execution
+  workflow_dispatch:
 
 jobs:
   run-script:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # ✅ Linux-based runner
 
     steps:
       - name: Checkout repository
@@ -21,10 +21,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Web Scraping (Electricity Prices)
+      # ✅ Install Chrome (Latest Version)
+      - name: Install Chrome
+        run: |
+          sudo apt update
+          sudo apt install -y google-chrome-stable
+
+      # ✅ Install ChromeDriver from Provided Link
+      - name: Install ChromeDriver (Version 134.0.6998.88)
+        run: |
+          wget -q -O chromedriver-linux64.zip "https://storage.googleapis.com/chrome-for-testing-public/134.0.6998.88/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
+          echo "✅ Installed ChromeDriver 134.0.6998.88"
+
+      - name: Run Web Scraping
         run: |
           python States_data.py
           python VP_data.py
 
       - name: Run FAISS Index Update
-        run: python store_in_faiss_upd.py
+        run: python store_in_faiss.py
