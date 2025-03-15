@@ -6,7 +6,7 @@ import subprocess  # Runs scraping scripts before FAISS processing
 
 # ✅ Run web scraping scripts first
 subprocess.run(["python", "States_data.py"])
-subprocess.run(["python", "VP_data.py"])
+#subprocess.run(["python", "VP_data.py"])
 
 # ✅ Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
