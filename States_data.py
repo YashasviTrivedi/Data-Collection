@@ -5,21 +5,21 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-# ✅ Setup Chrome options for GitHub Actions
+# ✅ Setup Chrome options
 chrome_options = Options()
-chrome_options.add_argument("--headless")  # Run without UI
+chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
-
-# ✅ Add User-Agent to Mimic a Real Browser (Avoid Blocking)
 chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.198 Safari/537.36")
 
 # ✅ Start WebDriver
 service = Service("/usr/local/bin/chromedriver")
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
-# ✅ Website to scrape
+# ✅ Open the website
 web = "https://vidyutpravah.in/"
 try:
     driver.get(web)
@@ -29,29 +29,32 @@ except Exception as e:
     driver.quit()
     exit(1)
 
-# ✅ Extract page title (to confirm the website loaded)
-page_title = driver.title
-print(f"🔍 Page title: {page_title}")
-
-# ✅ Check if website loaded properly
-if "403" in page_title or "Access Denied" in page_title or page_title.strip() == "":
-    print("❌ ERROR: Website is blocking GitHub Actions. Exiting.")
+# ✅ Wait for state elements to load (Max 15 seconds)
+try:
+    wait = WebDriverWait(driver, 15)
+    state_elements = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.state-names_en")))
+    state_links = {element.text.strip(): element.get_attribute("href") for element in state_elements if element.text and element.get_attribute("href")}
+    print(f"✅ Found {len(state_links)} states with data.")
+except Exception as e:
+    print(f"❌ ERROR: State elements did not load in time: {e}")
     driver.quit()
     exit(1)
 
-# ✅ Extract state links
-try:
-    state_elements = driver.find_elements(By.CSS_SELECTOR, "a.state-names_en")
-    state_links = {element.text.strip(): element.get_attribute("href") for element in state_elements if element.text and element.get_attribute("href")}
-    print(f"✅ Found {len(state_links)} states with data.")
-
-    if not state_links:
-        print("❌ No state links found! Website structure may have changed.")
+# ✅ If no states are found, retry after a delay
+if not state_links:
+    print("⚠️ No state links found, retrying in 5 seconds...")
+    time.sleep(5)
+    try:
+        state_elements = driver.find_elements(By.CSS_SELECTOR, "a.state-names_en")
+        state_links = {element.text.strip(): element.get_attribute("href") for element in state_elements if element.text and element.get_attribute("href")}
+    except Exception as e:
+        print(f"❌ ERROR: Could not retrieve state links after retry: {e}")
         driver.quit()
         exit(1)
 
-except Exception as e:
-    print(f"❌ Failed to extract state links: {e}")
+# ✅ If still no states, exit
+if not state_links:
+    print("❌ ERROR: No state links found! Website structure may have changed.")
     driver.quit()
     exit(1)
 
@@ -59,8 +62,8 @@ except Exception as e:
 csv_file = "States_data.csv"
 
 # ✅ Write headers to CSV
-header = ["Timestamp", "State", "Current Exchange Price (₹/Unit)", "Yesterday Exchange Price (₹/Unit)", 
-          "Current Demand Met (MW)", "Yesterday Demand Met (MW)", "Current Power Purchased (MW)", 
+header = ["Timestamp", "State", "Current Exchange Price (₹/Unit)", "Yesterday Exchange Price (₹/Unit)",
+          "Current Demand Met (MW)", "Yesterday Demand Met (MW)", "Current Power Purchased (MW)",
           "Energy Shortage Yesterday (MU)", "Peak Energy Shortage Yesterday (MU)"]
 
 with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
@@ -71,7 +74,7 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
     print(f"✅ Data recorded at {timestamp}")
 
     for state, url in state_links.items():
-        driver.get(url)  # Open state page
+        driver.get(url)
         print(f"🔍 Extracting data for {state}...")
 
         try:
