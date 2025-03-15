@@ -2,41 +2,42 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-# Set up WebDriver
-driver_path = "D:/New folder (2)/chromedriver-win64/chromedriver-win64/chromedriver.exe"  # Replace with the correct path
-service = Service(driver_path)
-driver = webdriver.Chrome(service=service)
+# ✅ Setup Chrome options for headless mode
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
-# Open CSV file to store the data
+# ✅ Start WebDriver (No Local Path Needed)
+service = Service("/usr/local/bin/chromedriver")
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
 with open('VP_data.csv', mode='a', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
 
     try:
-        # Open the Vidyut Pravah website
         driver.get("https://vidyutpravah.in/")
 
-        # Extract the data
-        surplus_power = driver.find_element(By.XPATH, '//*[@id="spanAllIndiaSurplus"]').text
-        avg_mcp = driver.find_element(By.XPATH, '//*[@id="UMCP"]').text
-        demand_met_current = driver.find_element(By.XPATH, '//*[@id="CurrentDemandMET"]').text
-        demand_met_yesterday = driver.find_element(By.XPATH, '//*[@id="PrevDemandMET"]').text
-        peak_shortage = driver.find_element(By.XPATH, '//*[@id="spanPeak"]').text
-        energy = driver.find_element(By.XPATH, '//*[@id="spanEnergy"]').text
-        unconstrained_price = driver.find_element(By.XPATH, '//*[@id="CongestionToday"]').text
-
-        # Get the current timestamp
         timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        data = [
+            timestamp,
+            driver.find_element(By.XPATH, '//*[@id="spanAllIndiaSurplus"]').text,
+            driver.find_element(By.XPATH, '//*[@id="UMCP"]').text,
+            driver.find_element(By.XPATH, '//*[@id="CurrentDemandMET"]').text,
+            driver.find_element(By.XPATH, '//*[@id="PrevDemandMET"]').text,
+            driver.find_element(By.XPATH, '//*[@id="spanPeak"]').text,
+            driver.find_element(By.XPATH, '//*[@id="spanEnergy"]').text,
+            driver.find_element(By.XPATH, '//*[@id="CongestionToday"]').text
+        ]
 
-        # Write the data to CSV
-        writer.writerow([timestamp, surplus_power, avg_mcp, demand_met_current, demand_met_yesterday,
-                             peak_shortage, energy, unconstrained_price])
+        writer.writerow(data)
+        print(f"✅ Data recorded at {timestamp}")
 
-        print("Data recorded at", timestamp)
+    except Exception as e:
+        print(f"⚠️ Error extracting data: {e}")
 
     finally:
-        # Close the WebDriver
         driver.quit()
-
-
