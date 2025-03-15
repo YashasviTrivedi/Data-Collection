@@ -26,7 +26,7 @@ state_links = {element.text.strip(): element.get_attribute("href") for element i
 csv_file = "States_data.csv"
 header = ["Timestamp", "State", "Current Exchange Price (₹/Unit)", "Yesterday Exchange Price (₹/Unit)", "Current Demand Met (MW)", "Yesterday Demand Met (MW)", "Current Power Purchased (MW)", "Energy Shortage Yesterday (MU)", "Peak Energy Shortage Yesterday (MU)"]
 
-with open(csv_file, mode="a", newline="", encoding="utf-8") as file:
+with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
