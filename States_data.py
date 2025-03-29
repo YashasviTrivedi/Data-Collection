@@ -31,7 +31,11 @@ except Exception as e:
 
 # ✅ Wait for state elements to load (Max 15 seconds)
 try:
-    wait = WebDriverWait(driver, 15)
+    timeout = 30  
+    WebDriverWait(driver, timeout).until(
+        expected_conditions.presence_of_element_located(            
+             (By.CSS_SELECTOR, "div.ais-hits")
+    #wait = WebDriverWait(driver, 15)
     state_elements = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.state-names_en")))
     state_links = {element.text.strip(): element.get_attribute("href") for element in state_elements if element.text and element.get_attribute("href")}
     print(f"✅ Found {len(state_links)} states with data.")
